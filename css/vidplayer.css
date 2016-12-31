@@ -1,0 +1,143 @@
+.yvp-wr {
+    display: inline-block;
+    position: relative;
+}
+
+.yvp-video {
+    vertical-align: middle;
+}
+
+video {
+    display: inline-block;
+    vertical-align: baseline;
+}
+
+.yvp-wr:-webkit-full-screen {
+    width: 100% !important;
+    height: 100% !important;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    border: 0;
+}
+
+.yvp-container {
+    display: block;
+    vertical-align: top;
+    box-sizing: border-box;
+    color: #fff;
+    background-color: #000;
+}
+
+.yvp-container.yvp-fullscreen {
+    width: 100% !important;
+    height: 100% !important;
+    padding-top: 0 !important;
+    position: absolute;
+    top:0;
+    left:0;
+}
+
+.yvp-container.yvp-fullscreen video {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.yvp-controlbar {
+    display: flex;
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    position: absolute;
+    width: 100%;
+    height: 40px;
+    background: rgba(0,0,0,.8);
+    bottom: 0;
+    cursor:pointer;
+}
+
+.yvp-controlbar > * {
+    -webkit-box-flex: none;
+    -moz-box-flex: none;
+    -webkit-flex: none;
+    -ms-flex: none;
+    flex: none;
+    display: flex;
+    position: relative;
+    box-sizing: inherit;
+    width:4em;
+    align-items: flex-start;
+}
+
+.yvp-playbtn {
+    height: 100%;
+    display: inline-block;
+    cursor: pointer;
+}
+
+.yvp-playbtn > div {
+    color: #FFF;
+    width: inherit;
+    text-align:center;
+    line-height: 40px;
+    vertical-align:middle;
+}
+
+.yvp-playbtn > div {
+    transition: text-shadow 0.25s;
+    -webkit-transition: text-shadow 0.25s;
+    -moz-transition: text-shadow 0.25s;
+    -o-transition: text-shadow 0.25s;
+}
+
+.yvp-playbtn-play:before {
+    content: "\f04b";
+}
+
+.yvp-playbtn-pause:before {
+    content: "\f04c";
+}
+
+.yvp-fsbtn {
+    height: 100%;
+    display: inline-block;
+    cursor: pointer;
+    color: #FFF;
+    text-align:center;
+    line-height: 40px;
+    vertical-align:middle;
+}
+
+.yvp-playbtn > div:hover,
+.yvp-fsbtn:hover {
+    text-shadow: 0px 0px 10px rgba(255,200,200,1);
+}
+
+.yvp-playbtn > div,
+.yvp-fsbtn {
+    transition: text-shadow 0.25s;
+    -webkit-transition: text-shadow 0.25s;
+    -moz-transition: text-shadow 0.25s;
+    -o-transition: text-shadow 0.25s;
+}
+
+.yvp-progress-wr {
+    -webkit-box-flex: auto;
+    -moz-box-flex: auto;
+    -webkit-flex: auto;
+    -ms-flex: auto;
+    flex: auto;
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-align: center;
+    -webkit-align-items: center;
+    -ms-flex-align: center;
+    align-items: center;
+    min-width: 4em;
+}
