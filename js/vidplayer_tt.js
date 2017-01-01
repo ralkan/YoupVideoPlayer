@@ -13,6 +13,7 @@
       progressctrl: "yvp-progressctrl",
       progressholder: "yvp-progressholder",
       playprogress: "yvp-playprogress",
+      progresstime: "yvp-progresstime",
     },
     init: [
       {
@@ -143,6 +144,10 @@
 
     this.init = function() {
       this._yvp.addEvent('playPause', this.playPause.bind(this));
+
+      this.element()[0].ontimeupdate = function(e) {
+        this._yvp.dispatchEvent({type: 'timeupdate', target: this});
+      }.bind(this);
     }
 
     this.toggleDefaultControls = function(show) {
@@ -160,6 +165,18 @@
       this.element()[0].pause();
       // Now the video is paused so we can set the pause icon to play
       this._yvp.dispatchEvent({type: 'pause', target:this});
+    }
+
+    this.getData = function(prop) {
+      return this.element()[0][prop];
+    }
+
+    this.currentTime = function() {
+      return this.element()[0].currentTime;
+    }
+
+    this.duration = function() {
+      return this.element()[0].duration;
     }
 
     this.paused = function() {
@@ -185,13 +202,6 @@
     this._yvp = yvp;
     this._el = $('<div class="'+clsname+'"/>');
 
-    this.addEvent = function() {
-      return this._yvp.addEvent.apply(null, arguments);
-    }
-
-    this.dispatchEvent = function() {
-      return this._yvp.dispatchEvent.apply(null, arguments);
-    }
   }
 
   function PlayerContainer() {
@@ -276,9 +286,18 @@
 
     function PlayProgress() {
       inherit(this, Container, arguments);
+
+      this.setProgress = function(percent) {
+        this.element().width(percent + "%");
+      }
+    }
+
+    function ProgressTime() {
+      inherit(this, Container, arguments);
     }
     DOMManipulationFacade(ProgressHolder);
     DOMManipulationFacade(PlayProgress);
+    DOMManipulationFacade(ProgressTime);
 
     this.init = function() {
       this._holder = new ProgressHolder(this._yvp, defaults.clsnames.progressholder);
@@ -286,6 +305,17 @@
 
       this._playprogress = new PlayProgress(this._yvp, defaults.clsnames.playprogress);
       this._playprogress.appendTo(this._holder);
+      this._playprogress.addClass('fa fa-circle');
+
+      this._progresstime = new ProgressTime(this._yvp, defaults.clsnames.progresstime);
+      this._progresstime.appendTo(this);
+
+      this.addEvent('timeupdate', this._handleTimeUpdate.bind(this));
+    }
+
+    this._handleTimeUpdate = function(e) {
+      var percent = (e.target.currentTime() / e.target.duration()) * 100;
+      this._playprogress.setProgress(percent);
     }
   }
 
@@ -374,6 +404,12 @@
     src.prototype.removeClass = function(clsname) {
       this.element().removeClass(clsname);
       return this;
+    }
+    src.prototype.addEvent = function() {
+      return this._yvp.addEvent.apply(null, arguments);
+    }
+    src.prototype.dispatchEvent = function() {
+      return this._yvp.dispatchEvent.apply(null, arguments);
     }
   }
 
