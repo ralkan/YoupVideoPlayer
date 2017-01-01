@@ -125,7 +125,7 @@ video {
     -o-transition: text-shadow 0.25s;
 }
 
-.yvp-progress-wr {
+.yvp-progressctrl {
     -webkit-box-flex: auto;
     -moz-box-flex: auto;
     -webkit-flex: auto;
@@ -140,4 +140,36 @@ video {
     -ms-flex-align: center;
     align-items: center;
     min-width: 4em;
+}
+
+.yvp-progressholder {
+    outline: 0;
+    position: relative;
+    cursor: pointer;
+    padding: 0;
+    margin: 0 0.45em 0 0.45em;
+    background-color: #73859f;
+    background-color: rgba(115, 133, 159, 0.5);
+    -webkit-box-flex: auto;
+    -moz-box-flex: auto;
+    -webkit-flex: auto;
+    -ms-flex: auto;
+    flex: auto;
+    -webkit-transition: all 0.2s;
+    -moz-transition: all 0.2s;
+    -o-transition: all 0.2s;
+    transition: all 0.2s;
+    height: 0.4em;
+}
+
+.yvp-playprogress {
+    background-color: #22a3ff;
+    position: absolute;
+    display: block;
+    height: 0.4em;
+    margin: 0;
+    padding: 0;
+    width: 0;
+    left: 0;
+    top: 0;
 }

@@ -5,10 +5,14 @@
       playercontainer: "yvp-container",
       videotag: "yvp-video",
       controlbar: "yvp-controlbar",
-      progressbarwr: "yvp-progress-wr",
+
+      // ControlBar Specific
       playbtn: "yvp-playbtn",
       playicon: "yvp-playbtn-play fa",
       fullscreenbtn: "yvp-fsbtn fa fa-arrows-alt",
+      progressctrl: "yvp-progressctrl",
+      progressholder: "yvp-progressholder",
+      playprogress: "yvp-playprogress",
     },
     init: [
       {
@@ -46,7 +50,6 @@
       },
     ]
   }
-
 
   function yvp(el, options) {
     this._player;
@@ -130,10 +133,6 @@
       return this._elements[name];
     }
 
-    this.toggleFullscreen = function() {
-      this._elements['mainwrapper'].toggleFullscreen();
-    }
-
     init(el);
   }
 
@@ -199,8 +198,9 @@
     inherit(this, Container, arguments);
     
     this.init = function() {
-      this.addEvent('enterFullscreen', this._enterFullscreen.bind(this));
-      this.addEvent('exitFullscreen', this._exitFullscreen.bind(this));
+      document.addEventListener(screenfull.raw.fullscreenchange, function() {
+        this._toggleFullscreen();
+      }.bind(this));
     }
 
     this._enterFullscreen = function() {
@@ -210,29 +210,35 @@
     this._exitFullscreen = function() {
       this.element().removeClass('yvp-fullscreen');
     }
+
+    this._toggleFullscreen = function() {
+      if(screenfull.isFullscreen) {
+        this._enterFullscreen();
+      } else {
+        this._exitFullscreen();
+      }
+    }
   }
 
   function ControlBar() {
     inherit(this, Container, arguments);
+
     this._playbtn;
+    this._progressctrl;
     this._fsbtn;
 
     this.init = function() {
+      // Play Button
       this._playbtn = new PlayBtn(this._yvp, defaults.clsnames.playbtn);
       this._playbtn.appendTo(this).init();
 
+      // Progress Control
+      this._progressctrl = new ProgressControl(this._yvp, defaults.clsnames.progressctrl);
+      this._progressctrl.appendTo(this).init();
+
+      // Fullscreen Button
       this._fsbtn = new FullScreenBtn(this._yvp, defaults.clsnames.fullscreenbtn);
       this._fsbtn.appendTo(this).init();
-    }
-  }
-
-  function FullScreenBtn() {
-    inherit(this, Container, arguments);
-
-    this.init = function() {
-      this.element().click(function() {
-        this.dispatchEvent({type: "toggleFullscreen"});
-      }.bind(this));
     }
   }
 
@@ -261,124 +267,53 @@
     }
   }
 
+  function ProgressControl() {
+    inherit(this, Container, arguments);
+
+    function ProgressHolder() {
+      inherit(this, Container, arguments);
+    }
+
+    function PlayProgress() {
+      inherit(this, Container, arguments);
+    }
+    DOMManipulationFacade(ProgressHolder);
+    DOMManipulationFacade(PlayProgress);
+
+    this.init = function() {
+      this._holder = new ProgressHolder(this._yvp, defaults.clsnames.progressholder);
+      this._holder.appendTo(this);
+
+      this._playprogress = new PlayProgress(this._yvp, defaults.clsnames.playprogress);
+      this._playprogress.appendTo(this._holder);
+    }
+  }
+
+  function FullScreenBtn() {
+    inherit(this, Container, arguments);
+
+    this.init = function() {
+      this.element().click(function() {
+        this.dispatchEvent({type: "toggleFullscreen"});
+      }.bind(this));
+    }
+  }
+
   // Gotta wrap 'em all
   function MainWrapper() {
     inherit(this, Container, arguments);
-    this.fullscreen = _fullscreen();
 
     this.init = function() {
       this.addEvent('toggleFullscreen', this.toggleFullscreen.bind(this));
     }
 
-    function _fullscreen() {
-      var fullscreen = {
-          supportsFullScreen: false,
-          isFullScreen: function() {
-            return false;
-          },
-          requestFullScreen: function() {},
-          cancelFullScreen: function() {},
-          fullScreenEventName: '',
-          element: null,
-          prefix: ''
-        },
-        browserPrefixes = 'webkit o moz ms khtml'.split(' ');
-
-      // Check for native support
-      if (!isundefined(document.cancelFullScreen)) {
-        fullscreen.supportsFullScreen = true;
-      } else {
-        // Check for fullscreen support by vendor prefix
-        for (var i = 0, il = browserPrefixes.length; i < il; i++) {
-          fullscreen.prefix = browserPrefixes[i];
-
-          if (!isundefined(document[fullscreen.prefix + 'CancelFullScreen'])) {
-            fullscreen.supportsFullScreen = true;
-            break;
-          } else if (!isundefined(document.msExitFullscreen) &&
-            document.msFullscreenEnabled) {
-            // Special case for MS (when isn't it?)
-            fullscreen.prefix = 'ms';
-            fullscreen.supportsFullScreen = true;
-            break;
-          }
-        }
-      }
-
-      // Update methods to do something useful
-      if (fullscreen.supportsFullScreen) {
-        // Yet again Microsoft awesomeness,
-        // Sometimes the prefix is 'ms', sometimes 'MS' to keep you on your toes
-        fullscreen.fullScreenEventName = (fullscreen.prefix === 'ms' ?
-          'MSFullscreenChange' : fullscreen.prefix + 'fullscreenchange');
-
-        fullscreen.isFullScreen = function(element) {
-          if (isundefined(element)) {
-            element = document.body;
-          }
-          switch (this.prefix) {
-            case '':
-              return document.fullscreenElement === element;
-            case 'moz':
-              return document.mozFullScreenElement === element;
-            default:
-              return document[this.prefix + 'FullscreenElement'] === element;
-          }
-        };
-        fullscreen.requestFullScreen = function(element) {
-          if (isundefined(element)) {
-            element = document.body;
-          }
-          return (this.prefix === '') ?
-            element.requestFullScreen() :
-            element[this.prefix +
-              (this.prefix === 'ms' ? 'RequestFullscreen' : 'RequestFullScreen')]();
-        };
-        fullscreen.cancelFullScreen = function() {
-          return (this.prefix === '') ?
-            document.cancelFullScreen() :
-            document[this.prefix +
-              (this.prefix === 'ms' ? 'ExitFullscreen' : 'CancelFullScreen')]();
-        };
-        fullscreen.element = function() {
-          return (this.prefix === '') ?
-            document.fullscreenElement :
-            document[this.prefix + 'FullscreenElement'];
-        };
-      }
-
-      return fullscreen;
-    }
-
     this.toggleFullscreen = function() {
-      if (this.fullscreen.supportsFullScreen) {
-        // If it's a fullscreen change event, update the UI
-        if (event && event.type === this.fullscreen.fullScreenEventName) {
-          this.isFullscreen = this.fullscreen.isFullScreen(this.element()[0]);
+      if (screenfull.enabled) {
+        if (!screenfull.isFullscreen) {
+          screenfull.request(this.element()[0]);
         } else {
-          // Else it's a user request to enter or exit
-          if (!this.fullscreen.isFullScreen(this.element()[0])) {
-
-            // Request full screen
-            this.fullscreen.requestFullScreen(this.element()[0]);
-            this.dispatchEvent({type: "enterFullscreen"});
-          } else {
-            // Bail from fullscreen
-            this.fullscreen.cancelFullScreen();
-            this.dispatchEvent({type: "exitFullscreen"});
-          }
-
-          // Check if we're actually full screen (it could fail)
-          this.isFullscreen = this.fullscreen.isFullScreen(this.element()[0]);
-
-          return;
+          screenfull.exit();
         }
-      } else {
-        // Otherwise, it's a simple toggle
-        this.isFullscreen = !this.isFullscreen;
-
-        // Bind/unbind escape key
-        // document.body.style.overflow = this.isFullscreen ? 'hidden' : '';
       }
     }
   }
@@ -449,6 +384,7 @@
   DOMManipulationFacade(PlayBtn);
   DOMManipulationFacade(FullScreenBtn);
   DOMManipulationFacade(PlayerContainer);
+  DOMManipulationFacade(ProgressControl);
 
   win.vp = yvp;
 })(window, jQuery)
