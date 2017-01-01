@@ -1,6 +1,7 @@
 .yvp-wr {
     display: inline-block;
     position: relative;
+    font-family: arial, "Roboto";
 }
 
 .yvp-video {
@@ -196,4 +197,14 @@ video {
     -moz-transition: all 0.15s;
     -o-transition: all 0.15s;
     transition: all 0.15s;
+}
+
+.yvp-progresstime {
+    width: 5em;
+    line-height: 31px;
+}
+
+.yvp-progresstime > span {
+    font-size: 11px;
+    color: #CCC;
 }

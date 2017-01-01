@@ -53,15 +53,19 @@
   }
 
   function yvp(el, options) {
+    return new YVideoPlayer(el, options);
+  }
+
+  function YVideoPlayer(el, options) {
     this._player;
     this._elements = {}
     this._eventlist = [];
 
-    function init(id) {
+    this.init = function(id) {
       el = $('#' + id);
 
       // Init Specific
-      function _init_videotag(el) {
+      this._init_videotag = function(el) {
         this._player = new PlayerElement(this, el);
         this._player.toggleDefaultControls();
         this._player.addClass(defaults.clsnames.videotag);
@@ -83,7 +87,7 @@
         return new_args;
       }
 
-      function _doInitialize() {
+      this._doInitialize = function() {
         for(var i in defaults.init) {
           var data = defaults.init[i];
           var obj = new (Function.prototype.bind.apply(
@@ -100,8 +104,8 @@
         }
       }
  
-      _init_videotag(el);
-      _doInitialize();
+      this._init_videotag(el);
+      this._doInitialize();
     }
 
     this.addEvent = function(type, cb) {
@@ -134,7 +138,7 @@
       return this._elements[name];
     }
 
-    init(el);
+    this.init(el);
   }
 
   // The main video element
@@ -199,13 +203,11 @@
   };
 
   function Container(yvp, clsname) {
-    this._yvp = yvp;
-    this._el = $('<div class="'+clsname+'"/>');
-
+    inherit(this, arguments);
   }
 
   function PlayerContainer() {
-    inherit(this, Container, arguments);
+    inherit(this, arguments);
     
     this.init = function() {
       document.addEventListener(screenfull.raw.fullscreenchange, function() {
@@ -231,7 +233,7 @@
   }
 
   function ControlBar() {
-    inherit(this, Container, arguments);
+    inherit(this, arguments);
 
     this._playbtn;
     this._progressctrl;
@@ -239,27 +241,28 @@
 
     this.init = function() {
       // Play Button
-      this._playbtn = new PlayBtn(this._yvp, defaults.clsnames.playbtn);
+      this._playbtn = new PlayBtn(this._yvp, defaults.clsnames.playbtn, this);
       this._playbtn.appendTo(this).init();
 
       // Progress Control
-      this._progressctrl = new ProgressControl(this._yvp, defaults.clsnames.progressctrl);
+      this._progressctrl = new ProgressControl(this._yvp, defaults.clsnames.progressctrl, this);
       this._progressctrl.appendTo(this).init();
 
       // Fullscreen Button
-      this._fsbtn = new FullScreenBtn(this._yvp, defaults.clsnames.fullscreenbtn);
+      this._fsbtn = new FullScreenBtn(this._yvp, defaults.clsnames.fullscreenbtn, this);
       this._fsbtn.appendTo(this).init();
     }
   }
 
   function PlayBtn() {
-    inherit(this, Container, arguments);
+    inherit(this, arguments);
     this._icon;
 
     this.init = function() {
       this._icon = new Container(this._yvp, defaults.clsnames.playicon);
       this._icon.appendTo(this);
 
+      console.log(this._yvp);
       this.addEvent('playpromise', this.showPause.bind(this));
       this.addEvent('pause', this.showPlay.bind(this));
 
@@ -278,14 +281,14 @@
   }
 
   function ProgressControl() {
-    inherit(this, Container, arguments);
+    inherit(this, arguments);
 
     function ProgressHolder() {
-      inherit(this, Container, arguments);
+      inherit(this, arguments);
     }
 
     function PlayProgress() {
-      inherit(this, Container, arguments);
+      inherit(this, arguments);
 
       this.setProgress = function(percent) {
         this.element().width(percent + "%");
@@ -293,7 +296,19 @@
     }
 
     function ProgressTime() {
-      inherit(this, Container, arguments);
+      inherit(this, arguments);
+
+      this.init = function() {
+        this.element().append($('<span></span>'));
+      }
+
+      this.setTime = function(current, duration) {
+        this.setHtml('00:04 / 03:44');
+      }
+
+      this.setHtml = function(html) {
+        this.element().find('span').html(html);
+      }
     }
     DOMManipulationFacade(ProgressHolder);
     DOMManipulationFacade(PlayProgress);
@@ -308,19 +323,24 @@
       this._playprogress.addClass('fa fa-circle');
 
       this._progresstime = new ProgressTime(this._yvp, defaults.clsnames.progresstime);
-      this._progresstime.appendTo(this);
+      this._progresstime.appendTo(this._parent).init();
 
-      this.addEvent('timeupdate', this._handleTimeUpdate.bind(this));
+      this.addEvent('timeupdate', function(e) {
+        this._handleTimeUpdate(e);
+      }.bind(this));
     }
 
     this._handleTimeUpdate = function(e) {
-      var percent = (e.target.currentTime() / e.target.duration()) * 100;
+      var current = e.target.currentTime();
+      var duration = e.target.duration();
+      var percent = (current / duration) * 100;
       this._playprogress.setProgress(percent);
+      this._progresstime.setTime(current, duration);
     }
   }
 
   function FullScreenBtn() {
-    inherit(this, Container, arguments);
+    inherit(this, arguments);
 
     this.init = function() {
       this.element().click(function() {
@@ -331,7 +351,7 @@
 
   // Gotta wrap 'em all
   function MainWrapper() {
-    inherit(this, Container, arguments);
+    inherit(this, arguments);
 
     this.init = function() {
       this.addEvent('toggleFullscreen', this.toggleFullscreen.bind(this));
@@ -355,13 +375,11 @@
     return args;
   }
 
-  function inherit(obj, src, args) {
-    args = argstoarray(args);
-    var srcobj = new (Function.prototype.bind.apply(src, args));
-    for(var attr in srcobj) {
-      if(!src.prototype.hasOwnProperty(attr)) {
-        obj[attr] = srcobj[attr];
-      }
+  function inherit(obj, args) {
+    obj._yvp = args[0];
+    obj._el = $('<div class="'+args[1]+'"/>');
+    if(args[2]) {
+      obj._parent = args[2];
     }
   }
 
@@ -406,10 +424,10 @@
       return this;
     }
     src.prototype.addEvent = function() {
-      return this._yvp.addEvent.apply(null, arguments);
+      return this._yvp.addEvent.apply(this._yvp, arguments);
     }
     src.prototype.dispatchEvent = function() {
-      return this._yvp.dispatchEvent.apply(null, arguments);
+      return this._yvp.dispatchEvent.apply(this._yvp, arguments);
     }
   }
 
