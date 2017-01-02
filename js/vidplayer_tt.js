@@ -5,6 +5,7 @@
       playercontainer: "yvp-container",
       videotag: "yvp-video",
       controlbar: "yvp-controlbar",
+      bigplaybtnwr: "yvp-bigplaybtnwr",
 
       // ControlBar Specific
       playbtn: "yvp-playbtn",
@@ -79,7 +80,6 @@
 
     this.init = function(id) {
       var _el = $('#' + id);
-      console.log(defaults.options);
       el = $('<video x-webkit-airplay="allow" webkit-playsinline controls/>');
       el.attr('id', id);
       el.attr('src', defaults.options.sources[0]['file']);
@@ -265,6 +265,13 @@
     inherit(this, arguments);
     
     this.init = function() {
+      var playbtn = new Container(this._yvp, 'yvp-bigplaybtn', this);
+      var playbtnicon = new Container(this._yvp, 'yvp-bigplaybtn-i fa fa-play', this);
+      this._bigPlayBtn = new Container(this._yvp, defaults.clsnames.bigplaybtnwr, this);
+      this._bigPlayBtn.appendTo(this);
+      playbtn.appendTo(this._bigPlayBtn);
+      playbtnicon.appendTo(playbtn);
+
       win.document.addEventListener(screenfull.raw.fullscreenchange, function() {
         this._toggleFullscreen();
       }.bind(this));
@@ -273,6 +280,13 @@
         if(e.target == this._yvp._player.element()[0]) {
           this._yvp._player.playPause();
         }
+      }.bind(this));
+
+      this.addEvent('playpromise', function() {
+        this._bigPlayBtn.remove();
+      }.bind(this));
+      this._bigPlayBtn.onClick(function() {
+        this._yvp._player.playPause();
       }.bind(this));
     }
 
@@ -544,6 +558,15 @@
 
     this.init = function() {
       this.addEvent('toggleFullscreen', this.toggleFullscreen.bind(this));
+      this.addEvent('playpromise', function() {
+        this._hideBigBtn();
+      }.bind(this));
+    }
+
+    this._hideBigBtn = function() {
+      if(!this.hasClass('yvp-played')) {
+        this.addClass('yvp-played');
+      }
     }
 
     this.toggleFullscreen = function() {
@@ -606,6 +629,9 @@
       this.insertBefore(obj).append(obj);
       return this;
     }
+    src.prototype.remove = function() {
+      this.element().remove();
+    }
     src.prototype.addAttr = function(attr, val) {
       this.element().addAttr(attr, val);
       return this;
@@ -621,6 +647,9 @@
     src.prototype.removeClass = function(clsname) {
       this.element().removeClass(clsname);
       return this;
+    }
+    src.prototype.hasClass = function(clsname) {
+      return this.element().hasClass(clsname);
     }
     src.prototype.addEvent = function() {
       return this._yvp.addEvent.apply(this._yvp, arguments);
