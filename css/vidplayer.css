@@ -51,7 +51,8 @@ video {
     height: 100%;
 }
 
-.yvp-bigplaybtnwr {
+.yvp-bigplaybtnwr,
+.yvp-center-icon-wr {
     position: absolute;
     top: 0;
     left: 0;
@@ -59,6 +60,14 @@ video {
     width: 100%;
     cursor: pointer;
     background: rgba(0,0,0,.15);
+    pointer-events: none;
+}
+
+.yvp-center-icon-wr {
+    display: none;
+}
+.yvp-center-icon-wr.visible {
+    display: block;
 }
 
 .yvp-bigplaybtnwr:hover .yvp-bigplaybtn {
@@ -69,7 +78,8 @@ video {
     text-shadow: 0 0 15px rgba(255,255,255,.55);
 }
 
-.yvp-bigplaybtn {
+.yvp-bigplaybtn,
+.yvp-center-icon-container {
     position: relative;
     top: 50%;
     display: table;
@@ -85,7 +95,15 @@ video {
     transition: all 0.2s;
 }
 
-.yvp-bigplaybtn-i {
+.yvp-center-icon-container {
+    width: 4em;
+    height: 4em;
+    border-radius: 100%;
+    background: rgba(0,0,0,.7);
+}
+
+.yvp-bigplaybtn-i,
+.yvp-center-icon-i {
     position: relative;
     display: table-cell;
     text-align: center;
@@ -93,6 +111,24 @@ video {
     background-position: 50% 50%;
     background-repeat: no-repeat;
     font-size: 2.5em;
+}
+
+@-moz-keyframes spin {
+    from { -moz-transform: rotate(0deg); }
+    to { -moz-transform: rotate(360deg); }
+}
+@-webkit-keyframes spin {
+    from { -webkit-transform: rotate(0deg); }
+    to { -webkit-transform: rotate(360deg); }
+}
+@keyframes spin {
+    from {transform:rotate(0deg);}
+    to {transform:rotate(360deg);}
+}
+
+.yvp-center-icon-i.yvp-buffering {
+    -webkit-animation: spin 1.8s linear infinite;
+    animation: spin 1.8s linear infinite;
 }
 
 .yvp-played .yvp-controlbar {

@@ -147,12 +147,14 @@
     }
 
     this.addEvent = function(type, cb) {
-      if(!this._eventlist[type]) {
-        this._eventlist[type] = [];
-      }
-
-      if(this._eventlist[type].indexOf(cb) === -1) {
-        this._eventlist[type].push(cb);
+      var types = type.split(' ');
+      for(var i=0; i < types.length; i++) {
+        if(!this._eventlist[types[i]]) {
+          this._eventlist[types[i]] = [];
+        }
+        if(this._eventlist[types[i]].indexOf(cb) === -1) {
+          this._eventlist[types[i]].push(cb);
+        }
       }
     }
 
@@ -195,6 +197,13 @@
         this._yvp.dispatchEvent({type: 'progress', target: this});
       }.bind(this);
 
+      this.element()[0].onwaiting = function(e) {
+        this._yvp.dispatchEvent({type: 'buffering', target: this});
+      }.bind(this);
+
+      this.element()[0].onplaying = function(e) {
+        this._yvp.dispatchEvent({type: 'playing', target: this});
+      }.bind(this);
     }
 
     this.toggleDefaultControls = function(show) {
@@ -203,9 +212,10 @@
 
     this.play = function() {
       // Now the video is playing so we can set the play icon to pause
-      this._yvp.dispatchEvent({type: 'playpromise', target:this}); 
-      this.element()[0].play().then(function() {})
-        .catch(function(error) {
+      this._yvp.dispatchEvent({type: 'play', target:this}); 
+      this.element()[0].play().then(function() {
+        this._yvp.dispatchEvent({type: 'playpromise', target:this}); 
+      }.bind(this)).catch(function(error) {
           this._yvp.dispatchEvent({type: 'pause', target:this});
         }.bind(this));
     }
@@ -272,6 +282,15 @@
       playbtn.appendTo(this._bigPlayBtn);
       playbtnicon.appendTo(playbtn);
 
+      var cicontainer = new Container(this._yvp, 'yvp-center-icon-container', this);
+      var ciicon = new Container(this._yvp, 
+                                 'yvp-center-icon-i yvp-buffering fa fa-spinner',
+                                 this);
+      this._centerIcon = new Container(this._yvp, 'yvp-center-icon-wr', this);
+      this._centerIcon.appendTo(this);
+      cicontainer.appendTo(this._centerIcon);
+      ciicon.appendTo(cicontainer);
+
       win.document.addEventListener(screenfull.raw.fullscreenchange, function() {
         this._toggleFullscreen();
       }.bind(this));
@@ -282,7 +301,15 @@
         }
       }.bind(this));
 
-      this.addEvent('playpromise', function() {
+      this.addEvent('playpromise playing', function() {
+        this._centerIcon.removeClass('visible');
+      }.bind(this));
+      this.addEvent('buffering', function() {
+        this._centerIcon.addClass('visible');
+      }.bind(this));
+
+      this.addEvent('play', function() {
+        this._centerIcon.addClass('visible');
         this._bigPlayBtn.remove();
       }.bind(this));
       this._bigPlayBtn.onClick(function() {
@@ -341,7 +368,7 @@
       this._icon = new Container(this._yvp, defaults.clsnames.playicon);
       this._icon.appendTo(this);
 
-      this.addEvent('playpromise', this.showPause.bind(this));
+      this.addEvent('play', this.showPause.bind(this));
       this.addEvent('pause', this.showPlay.bind(this));
 
       this.element().click(function() {
@@ -558,7 +585,7 @@
 
     this.init = function() {
       this.addEvent('toggleFullscreen', this.toggleFullscreen.bind(this));
-      this.addEvent('playpromise', function() {
+      this.addEvent('play', function() {
         this._hideBigBtn();
       }.bind(this));
     }
