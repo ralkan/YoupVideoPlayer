@@ -340,6 +340,7 @@
     this._playbtn;
     this._progressctrl;
     this._fsbtn;
+    this._mousemove_timeout = false;
 
     this.init = function() {
       // Play Button
@@ -357,6 +358,18 @@
       // Fullscreen Button
       this._fsbtn = new FullScreenBtn(this._yvp, defaults.clsnames.fullscreenbtn, this);
       this._fsbtn.appendTo(this).init();
+
+      this.addEvent('showcontrols', function(e) {
+        if(this._mousemove_timeout) {
+          clearTimeout(this._mousemove_timeout);
+        }
+        if(this.hasClass('hidden')) {
+          this.removeClass('hidden');
+        }
+        this._mousemove_timeout = setTimeout(function() {
+          this.addClass('hidden');
+        }.bind(this), 2500);
+      }.bind(this));
     }
   }
 
@@ -587,6 +600,10 @@
       this.addEvent('toggleFullscreen', this.toggleFullscreen.bind(this));
       this.addEvent('play', function() {
         this._hideBigBtn();
+      }.bind(this));
+
+      this.onMouseMove(function() {
+        this.dispatchEvent({type: 'showcontrols', target: this});
       }.bind(this));
     }
 
