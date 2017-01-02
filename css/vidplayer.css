@@ -29,6 +29,9 @@ video {
     box-sizing: border-box;
     color: #fff;
     background-color: #000;
+    cursor: pointer;
+    -webkit-tap-highlight-color: rgba(0,0,0,0);
+    -webkit-tap-highlight-color: transparent;
 }
 
 .yvp-container.yvp-fullscreen {
@@ -54,11 +57,15 @@ video {
     display: -webkit-flex;
     display: -ms-flexbox;
     position: absolute;
-    width: 100%;
+    width: 90%;
     height: 35px;
-    background: rgba(0,0,0,.8);
-    bottom: 0;
+    background: rgba(0,0,0,.6);
+    bottom: 10px;
+    left: 5%;
     cursor:pointer;
+    border-radius: 8px;
+    -webkit-tap-highlight-color: rgba(0,0,0,0);
+    -webkit-tap-highlight-color: transparent;
 }
 
 .yvp-controlbar > * {
@@ -70,8 +77,10 @@ video {
     display: flex;
     position: relative;
     box-sizing: inherit;
-    width:4em;
+    width:3.4em;
     align-items: flex-start;
+    -webkit-tap-highlight-color: rgba(0,0,0,0);
+    -webkit-tap-highlight-color: transparent;
 }
 
 .yvp-playbtn {
@@ -104,7 +113,8 @@ video {
 }
 
 .yvp-fsbtn,
-.yvp-progresstime {
+.yvp-progresstime,
+.yvp-volumebtn {
     height: 100%;
     display: inline-block;
     cursor: pointer;
@@ -114,9 +124,82 @@ video {
     vertical-align:middle;
 }
 
+.yvp-volumebtn {
+    width:1.75em;
+    z-index: 1;
+}
+
 .yvp-playbtn > div:hover,
-.yvp-fsbtn:hover {
+.yvp-fsbtn:hover,
+.yvp-volumebtn:hover {
     text-shadow: 0px 0px 10px rgba(255,200,200,1);
+}
+
+.yvp-volumebtn:hover .yvp-volumectrl {
+    height: 6em;
+}
+
+.yvp-volumectrl {
+    width: 100%;
+    height: 0;
+    background: rgba(0,0,0,.6);
+    position: absolute;
+    bottom: 35px;
+    left: 0;
+    border-radius: 6px 6px 0 0;
+    -webkit-transition: all 0.2s;
+    -moz-transition: all 0.2s;
+    -o-transition: all 0.2s;
+    transition: all 0.2s;
+    overflow: hidden;
+    z-index: 10;
+}
+
+.yvp-volumeholder {
+    outline: 0;
+    position: relative;
+    padding: 0;
+    background-color: #31363e;
+    background-color: rgba(115, 133, 159, 0.3);
+    margin: auto;
+    width: 0.25em;
+    height: 4.8em;
+    top: 12%;
+    border-radius: 6px;
+}
+
+.yvp-volumelevel {
+    /* background-color: #22a3ff; */
+    background-color: #E97128;
+    /* background-color: #ffb800; */
+    position: absolute;
+    display: block;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    left: 0;
+    bottom: 0;
+    border-radius:5px;
+    z-index: 21;
+}
+
+.yvp-volumectrl:hover .yvp-volumelevel:before {
+    font-size: 0.9em;
+}
+
+.yvp-volumectrl:hover .yvp-volumeholder {
+    width: 0.34em;
+}
+
+.yvp-volumelevel:before {
+    position: absolute;
+    top: -0.5em;
+    right: -0.24em;
+    font-size: 0px;
+    -webkit-transition: all 0.15s;
+    -moz-transition: all 0.15s;
+    -o-transition: all 0.15s;
+    transition: all 0.15s;
 }
 
 .yvp-playbtn > div,
@@ -145,7 +228,8 @@ video {
 }
 
 .yvp-progressctrl:hover .yvp-progressholder,
-.yvp-progressctrl:hover .yvp-playprogress {
+.yvp-progressctrl:hover .yvp-playprogress,
+.yvp-progressctrl:hover .yvp-bufferprogress {
     height: 0.4em;
 }
 .yvp-progressctrl:hover .yvp-playprogress:before {
@@ -159,8 +243,8 @@ video {
     cursor: pointer;
     padding: 0;
     margin: 0 0.45em 0 0.45em;
-    background-color: #73859f;
-    background-color: rgba(115, 133, 159, 0.5);
+    background-color: #31363e;
+    background-color: rgba(115, 133, 159, 0.3);
     -webkit-box-flex: auto;
     -moz-box-flex: auto;
     -webkit-flex: auto;
@@ -179,7 +263,19 @@ video {
     top: 0;
 }
 
-.yvp-progressholder, .yvp-playprogress {
+.yvp-bufferprogress {
+    background-color: rgba(98, 139, 169, 0.58);
+    position: absolute;
+    display: block;
+    margin: 0;
+    padding: 0;
+    width: 0;
+    left: 0;
+    top: 0;
+}
+
+.yvp-progressholder, .yvp-playprogress,
+.yvp-bufferprogress {
     height: 0.2em;
     -webkit-transition: all 0.1s;
     -moz-transition: all 0.1s;
@@ -200,7 +296,7 @@ video {
 }
 
 .yvp-progresstime {
-    width: 5em;
+    width: 3em;
     line-height: 31px;
 }
 

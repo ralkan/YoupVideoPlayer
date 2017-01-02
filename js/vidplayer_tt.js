@@ -9,10 +9,15 @@
       // ControlBar Specific
       playbtn: "yvp-playbtn",
       playicon: "yvp-playbtn-play fa",
+      volumectrlbtn: "yvp-volumebtn fa fa-volume-up",
+      volumectrl: "yvp-volumectrl",
+      volumeholder: "yvp-volumeholder",
+      volumelevel: "yvp-volumelevel fa fa-circle",
       fullscreenbtn: "yvp-fsbtn fa fa-arrows-alt",
       progressctrl: "yvp-progressctrl",
       progressholder: "yvp-progressholder",
       playprogress: "yvp-playprogress",
+      bufferprogress: "yvp-bufferprogress",
       progresstime: "yvp-progresstime",
     },
     init: [
@@ -49,7 +54,16 @@
           method: 'init',
           args: ['this']}
       },
-    ]
+    ],
+    options: {
+      sources: [],
+      autoplay: false,
+      image: "",
+      width: false,
+      height: false,
+      class: false,
+      preload: "none",
+    }
   }
 
   function yvp(el, options) {
@@ -61,8 +75,27 @@
     this._elements = {}
     this._eventlist = [];
 
+    $.extend(defaults.options, options);
+
     this.init = function(id) {
-      el = $('#' + id);
+      var _el = $('#' + id);
+      el = $('<video x-webkit-airplay="allow" webkit-playsinline controls/>');
+      el.attr('id', id);
+      el.attr('src', defaults.options.sources[0]['file']);
+      el.attr('preload', defaults.options.preload);
+      if(defaults.options.width) {
+        el.width(defaults.options.width);
+      }
+      if(defaults.options.height) {
+        el.height(defaults.options.height);
+      }
+      if(defaults.options.class) {
+        el.addClass(defaults.options.class);
+      }
+      if(defaults.options.image) {
+        el.attr('poster', defaults.options.image);
+      }
+      _el.replaceWith(el);
 
       // Init Specific
       this._init_videotag = function(el) {
@@ -152,6 +185,11 @@
       this.element()[0].ontimeupdate = function(e) {
         this._yvp.dispatchEvent({type: 'timeupdate', target: this});
       }.bind(this);
+
+      this.element()[0].onprogress = function(e) {
+        this._yvp.dispatchEvent({type: 'progress', target: this});
+      }.bind(this);
+
     }
 
     this.toggleDefaultControls = function(show) {
@@ -159,10 +197,12 @@
     }
 
     this.play = function() {
-      this.element()[0].play().then(function() {
-        // Now the video is playing so we can set the play icon to pause
-        this._yvp.dispatchEvent({type: 'playpromise', target:this}); 
-      }.bind(this)).catch(function(error) {});
+      // Now the video is playing so we can set the play icon to pause
+      this._yvp.dispatchEvent({type: 'playpromise', target:this}); 
+      this.element()[0].play().then(function() {})
+        .catch(function(error) {
+          this._yvp.dispatchEvent({type: 'pause', target:this});
+        }.bind(this));
     }
 
     this.pause = function() {
@@ -171,8 +211,18 @@
       this._yvp.dispatchEvent({type: 'pause', target:this});
     }
 
+    this.setVolume = function(vol) {
+      this.element()[0].volume = vol;
+    }
+
     this.getData = function(prop) {
       return this.element()[0][prop];
+    }
+
+    this.seekTo = function(seconds) {
+      if(!this.duration()) seconds = 0;
+      if(seconds > this.duration()) seconds = this.duration()-1;
+      this.element()[0].currentTime = seconds;
     }
 
     this.currentTime = function() {
@@ -210,8 +260,14 @@
     inherit(this, arguments);
     
     this.init = function() {
-      document.addEventListener(screenfull.raw.fullscreenchange, function() {
+      win.document.addEventListener(screenfull.raw.fullscreenchange, function() {
         this._toggleFullscreen();
+      }.bind(this));
+
+      this.onClick(function(e) {
+        if(e.target == this._yvp._player.element()[0]) {
+          this._yvp._player.playPause();
+        }
       }.bind(this));
     }
 
@@ -244,6 +300,10 @@
       this._playbtn = new PlayBtn(this._yvp, defaults.clsnames.playbtn, this);
       this._playbtn.appendTo(this).init();
 
+      // Volume Control
+      this._volumectrl = new VolumeControlBtn(this._yvp, defaults.clsnames.volumectrlbtn, this);
+      this._volumectrl.appendTo(this).init();
+
       // Progress Control
       this._progressctrl = new ProgressControl(this._yvp, defaults.clsnames.progressctrl, this);
       this._progressctrl.appendTo(this).init();
@@ -262,7 +322,6 @@
       this._icon = new Container(this._yvp, defaults.clsnames.playicon);
       this._icon.appendTo(this);
 
-      console.log(this._yvp);
       this.addEvent('playpromise', this.showPause.bind(this));
       this.addEvent('pause', this.showPlay.bind(this));
 
@@ -280,12 +339,78 @@
     }
   }
 
-  function ProgressControl() {
+  function VolumeControlBtn() {
     inherit(this, arguments);
 
-    function ProgressHolder() {
+    function VolumeControl() {
       inherit(this, arguments);
+      this._isDragging = false;
+
+      this.init = function() {
+        this.onMouseDown(function(e) {
+          this._isDragging = true;
+          this._handleVolumeChange(e);
+        }.bind(this));
+        this.onMouseMove(function(e) {
+          if(this._isDragging) this._handleVolumeChange(e);
+        }.bind(this));
+        $(document).mouseup(function() {
+          this._isDragging = false;
+        }.bind(this));
+      }
+
+      this._handleVolumeChange = function(e) {
+        var $tgt = $(e.currentTarget).find('.yvp-volumeholder');
+        var height = $tgt.height();
+        var yPos = height - (e.pageY - $tgt.offset().top);
+        if(yPos < 0) yPos = 0;
+        if(yPos > height) yPos = height;
+
+        var percent = (yPos / height) * 100;
+        this._parent._volumelevel.setLevel(percent);
+      }
     }
+
+    function VolumeLevel() {
+      inherit(this, arguments);
+
+      this.init = function() {
+        this.setLevel(this._yvp._player.element()[0].volume * 100);
+      }
+
+      this.setLevel = function(percent) {
+        this.element().height(percent + '%');
+        this._yvp._player.setVolume(percent / 100);
+
+        if(percent > 40) {
+          this._parent.removeClass('fa-volume-down fa-volume-off').addClass('fa-volume-up');
+        } else if(percent < 39 && percent > 20) {
+          this._parent.removeClass('fa-volume-up fa-volume-off').addClass('fa-volume-down');
+        } else if(percent < 19) {
+          this._parent.removeClass('fa-volume-up fa-volume-down').addClass('fa-volume-off');
+        }
+      }
+    }
+    DOMManipulationFacade(VolumeControl);
+    DOMManipulationFacade(VolumeLevel);
+
+    this.init = function() {
+      this._volumewr = new VolumeControl(this._yvp, defaults.clsnames.volumectrl, this);
+      this._volumewr.appendTo(this);
+
+      this._volumeholder = new Container(this._yvp, defaults.clsnames.volumeholder, this);
+      this._volumeholder.appendTo(this._volumewr);
+
+      this._volumelevel = new VolumeLevel(this._yvp, defaults.clsnames.volumelevel, this);
+      this._volumelevel.appendTo(this._volumeholder).init();
+
+      this._volumewr.init();
+    }
+  }
+
+
+  function ProgressControl() {
+    inherit(this, arguments);
 
     function PlayProgress() {
       inherit(this, arguments);
@@ -295,47 +420,106 @@
       }
     }
 
-    function ProgressTime() {
+    function BufferProgress() {
+      inherit(this, arguments);
+
+      this.setProgress = function(percent) {
+        this.element().width(percent + "%");
+      }
+    }
+
+    function DurationTime() {
       inherit(this, arguments);
 
       this.init = function() {
-        this.element().append($('<span></span>'));
+        this.element().append($('<span>00:00</span>'));
       }
-
-      this.setTime = function(current, duration) {
-        this.setHtml('00:04 / 03:44');
+      
+      this.setTime = function(duration) {
+        this.setHtml(calculateTime(duration, duration));
       }
 
       this.setHtml = function(html) {
         this.element().find('span').html(html);
       }
     }
-    DOMManipulationFacade(ProgressHolder);
+
+    function ProgressTime() {
+      inherit(this, arguments);
+
+      this.init = function() {
+        this.element().append($('<span>00:00</span>'));
+      }
+
+      this.setTime = function(current, duration) {
+        this.setHtml(calculateTime(current, duration));
+      }
+
+      this.setHtml = function(html) {
+        this.element().find('span').html(html);
+      }
+    }
+    DOMManipulationFacade(BufferProgress);
     DOMManipulationFacade(PlayProgress);
     DOMManipulationFacade(ProgressTime);
+    DOMManipulationFacade(DurationTime);
 
     this.init = function() {
-      this._holder = new ProgressHolder(this._yvp, defaults.clsnames.progressholder);
+      this._holder = new Container(this._yvp, defaults.clsnames.progressholder);
       this._holder.appendTo(this);
+
+      this._bufferprogress = new BufferProgress(this._yvp, defaults.clsnames.bufferprogress);
+      this._bufferprogress.appendTo(this._holder);
 
       this._playprogress = new PlayProgress(this._yvp, defaults.clsnames.playprogress);
       this._playprogress.appendTo(this._holder);
       this._playprogress.addClass('fa fa-circle');
 
       this._progresstime = new ProgressTime(this._yvp, defaults.clsnames.progresstime);
-      this._progresstime.appendTo(this._parent).init();
+      this._progresstime.insertBefore(this).init();
 
-      this.addEvent('timeupdate', function(e) {
-        this._handleTimeUpdate(e);
-      }.bind(this));
+      this._durationtime = new DurationTime(this._yvp, defaults.clsnames.progresstime);
+      this._durationtime.appendTo(this._parent).init();
+
+      this.addEvent('timeupdate', function(e) {this._handleTimeUpdate(e)}.bind(this));
+      this.onClick(function(e) {this._handleSeek(e)}.bind(this));
+      this.addEvent('progress', function(e) {this._handleProgress(e)}.bind(this));
+    }
+
+    this._handleProgress = function(e) {
+      var player = e.target.element()[0];
+      if (player.buffered.length < 1) return;
+      var index = 0;
+      for(var i=0; i < player.buffered.length; i++) {
+        if(player.currentTime > player.buffered.start(i) 
+            && player.currentTime < player.buffered.end(i)) {
+          index = i;
+          break;
+        }
+      }
+      var end = player.buffered.end(index);
+      this._bufferprogress.setProgress((end / player.duration) * 100);
+    }
+
+    this._handleSeek = function(e) {
+      var $tgt = $(e.currentTarget).find('.yvp-progressholder');
+      var xPos = e.pageX - $tgt.offset().left;
+      var width = $tgt.width();
+      if(xPos < 0) xPos = 0;
+      if(xPos > width) xPos = width;
+
+      var percent = (xPos / width) * 100;
+
+      this._playprogress.setProgress(percent);
+      this._yvp._player.seekTo(this._yvp._player.duration() * (percent/100));
     }
 
     this._handleTimeUpdate = function(e) {
       var current = e.target.currentTime();
       var duration = e.target.duration();
-      var percent = (current / duration) * 100;
-      this._playprogress.setProgress(percent);
+      this._playprogress.setProgress((current / duration) * 100);
       this._progresstime.setTime(current, duration);
+      this._durationtime.setTime(duration);
     }
   }
 
@@ -387,6 +571,16 @@
     return input !== null && typeof input === 'undefined';
   }
 
+  function calculateTime(time, duration) {
+    var secs = parseInt(time % 60);
+    var mins = parseInt((time / 60) % 60);
+    var hours = parseInt(((time / 60) / 60) % 60);
+    var displayHours = (parseInt(((duration / 60) / 60) % 60) > 0);
+    secs = ('0' + secs).slice(-2);
+    mins = ('0' + mins).slice(-2);
+    return (displayHours ? hours + ':' : '') + mins + ':' + secs;
+  }
+
   function DOMManipulationFacade(src) {
     src.prototype.element = function() {
       return this._el;
@@ -429,6 +623,19 @@
     src.prototype.dispatchEvent = function() {
       return this._yvp.dispatchEvent.apply(this._yvp, arguments);
     }
+
+    src.prototype.onClick = function(cb) {
+      return this.element().click(cb);
+    }
+    src.prototype.onMouseDown = function(cb) {
+      return this.element().mousedown(cb);
+    }
+    src.prototype.onMouseMove = function(cb) {
+      return this.element().mousemove(cb);
+    }
+    src.prototype.onMouseUp = function(cb) {
+      return this.element().mouseup(cb);
+    }
   }
 
   DOMManipulationFacade(Container);
@@ -436,167 +643,10 @@
   DOMManipulationFacade(MainWrapper);
   DOMManipulationFacade(PlayerElement);
   DOMManipulationFacade(PlayBtn);
+  DOMManipulationFacade(VolumeControlBtn);
   DOMManipulationFacade(FullScreenBtn);
   DOMManipulationFacade(PlayerContainer);
   DOMManipulationFacade(ProgressControl);
 
   win.vp = yvp;
 })(window, jQuery)
-
-/*
-function VideoPlayer(el, options) {
-  scrollPos = {x:0, y:0}
-  this._el = el;
-  this._wrapper;
-  this._container;
-  this._statusbar = {};
-  this._playbtn = {};
-  this._progress = {};
-  this._fullscreen_btn = {};
-
-  this.autoplay = getOrUndefined(options, 'autoplay') || false;
-  this.isFullscreen = false;
-  this.fullscreen = {};
-
-  this.init = function() {
-    this._el.removeAttr('controls');
-    this._wrapper = $('<div id="yvp-wr"/>');
-    this._container = $('<div class="yvp-container"/>');
-    this._statusbar.el = $('<div class="yvp-statusbar"/>');
-    this._progress.wr = $('<div class="yvp-progress-wr"/>');
-
-    this._el.addClass('yvp-video');
-    this._container.insertBefore(this._el).append(this._el);
-    this._wrapper.insertBefore(this._container).append(this._container);
-    this._container.append(this._statusbar.el);
-
-
-    this._init_play_btn();
-
-    this._statusbar.el.append(this._progress.wr);
-
-    this._init_fullscreen();
-    this.fullscreen = _fullscreen();
-
-    if(this.autoplay) {
-      this.play();
-    }
-  }
-
-  this._saveScrollPosition = function() {
-      scrollPos = {
-          x: window.pageXOffset || 0,
-          y: window.pageYOffset || 0
-      };
-  }
-
-  this._toggleFullscreen = function() {
-    var nativeSupport = this.fullscreen.supportsFullScreen;
-    if (nativeSupport) {
-        // If it's a fullscreen change event, update the UI
-        if (event && event.type === this.fullscreen.fullScreenEventName) {
-            this.isFullscreen = this.fullscreen.isFullScreen(this._el[0]);
-        } else {
-            // Else it's a user request to enter or exit
-            if (!this.fullscreen.isFullScreen(this._wrapper[0])) {
-                // Save scroll position
-                this._saveScrollPosition();
-
-                // Request full screen
-                this.fullscreen.requestFullScreen(this._wrapper[0]);
-            } else {
-                // Bail from fullscreen
-                this.fullscreen.cancelFullScreen();
-            }
-
-            // Check if we're actually full screen (it could fail)
-            this.isFullscreen = this.fullscreen.isFullScreen(this._el[0]);
-
-            return;
-        }
-    } else {
-        // Otherwise, it's a simple toggle
-        this.isFullscreen = !this.isFullscreen;
-
-        // Bind/unbind escape key
-        // document.body.style.overflow = this.isFullscreen ? 'hidden' : '';
-    }
-  }
-
-  this.play = function() {
-    var self = this;
-    this._el[0].play().then(function() {
-      self._playbtn.showPause()
-    }).catch(function(error) {});
-  }
-
-  this.pause = function() {
-    this._el[0].pause();
-    this._playbtn.showPlay();
-  }
-
-  this.playPause = function() {
-    if (this.isPaused() || this.ended()) {
-      this.play();
-    } else {
-      this.pause();
-    }
-  }
-  
-  // Init Specific
-  this._init_play_btn = function() {
-    var self = this;
-
-    this._playbtn.el = $('<div class="yvp-playbtn"/>');
-    
-    this._playbtn.childs = {}
-    this._playbtn.childs.icon = $('<div class="yvp-playbtn-play fa"/>');
-
-    this._playbtn.childs.icon.appendTo(this._playbtn.el);
-
-    this._statusbar.el.append(this._playbtn.el);
-    this._playbtn.el.click(function() {
-      self.playPause();
-    });
-  }
-
-  this._init_fullscreen = function() {
-    var self = this;
-
-    this._fullscreen_btn.el = $('<div class="yvp-fsbtn fa fa-arrows-alt"/>');
-    this._statusbar.el.append(this._fullscreen_btn.el);
-    this._fullscreen_btn.el.click(function() {
-      self._toggleFullscreen();
-    });
-  }
-
-  this._playbtn.showPause = function() {
-      this.childs.icon.removeClass('yvp-playbtn-play').addClass('yvp-playbtn-pause');
-  }
-
-  this._playbtn.showPlay = function() {
-      this.childs.icon.removeClass('yvp-playbtn-pause').addClass('yvp-playbtn-play');
-  }
-
-  // MediaElement Specific
-  this.isPaused = function() {
-    return this._el[0].paused;
-  }
-
-  this.ended = function() {
-    return this._el[0].ended;
-  }
-}
-
-// Check variable types
-
-function vp(selector, options) {
-  var el = $("#" + selector);
-  player = new VideoPlayer(el, options);
-
-  // TODO: Re-enable this
-  player.init();
-
-  return player;
-}
-*/
