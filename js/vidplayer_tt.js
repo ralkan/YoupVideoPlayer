@@ -79,15 +79,16 @@
 
     this.init = function(id) {
       var _el = $('#' + id);
+      console.log(defaults.options);
       el = $('<video x-webkit-airplay="allow" webkit-playsinline controls/>');
       el.attr('id', id);
       el.attr('src', defaults.options.sources[0]['file']);
       el.attr('preload', defaults.options.preload);
       if(defaults.options.width) {
-        el.width(defaults.options.width);
+        el.attr('width', defaults.options.width);
       }
       if(defaults.options.height) {
-        el.height(defaults.options.height);
+        el.attr('height', defaults.options.height);
       }
       if(defaults.options.class) {
         el.addClass(defaults.options.class);
@@ -139,6 +140,10 @@
  
       this._init_videotag(el);
       this._doInitialize();
+
+      if(defaults.options.autoplay) {
+        this._player.play();
+      }
     }
 
     this.addEvent = function(type, cb) {
