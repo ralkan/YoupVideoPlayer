@@ -60,11 +60,11 @@ video {
     width: 100%;
     cursor: pointer;
     background: rgba(0,0,0,.15);
-    pointer-events: none;
 }
 
 .yvp-center-icon-wr {
     display: none;
+    pointer-events: none;
 }
 .yvp-center-icon-wr.visible {
     display: block;
@@ -155,10 +155,10 @@ video {
     border-radius: 8px;
     -webkit-tap-highlight-color: rgba(0,0,0,0);
     -webkit-tap-highlight-color: transparent;
-    -webkit-transition: all 0.3s;
-    -moz-transition: all 0.3s;
-    -o-transition: all 0.3s;
-    transition: all 0.3s;
+    -webkit-transition: opacity 0.3s;
+    -moz-transition: opacity 0.3s;
+    -o-transition: opacity 0.3s;
+    transition: opacity 0.3s;
 }
 
 .yvp-controlbar > * {
@@ -183,11 +183,11 @@ video {
 }
 
 .yvp-playbtn > div {
-    color: #FFF;
     width: inherit;
     text-align:center;
     line-height: 35px;
     vertical-align:middle;
+    color: #DDD;
 }
 
 .yvp-playbtn > div,
@@ -212,7 +212,7 @@ video {
     height: 100%;
     display: inline-block;
     cursor: pointer;
-    color: #FFF;
+    color: #DDD;
     text-align:center;
     line-height: 35px;
     vertical-align:middle;
@@ -226,7 +226,8 @@ video {
 .yvp-playbtn > div:hover,
 .yvp-fsbtn:hover,
 .yvp-volumebtn:hover {
-    text-shadow: 0px 0px 10px rgba(255,200,200,1);
+    text-shadow: 0px 0px 14px rgba(233,113,40,1);
+    color:#FFF;
 }
 
 .yvp-volumebtn:hover .yvp-volumectrl {
@@ -396,5 +397,5 @@ video {
 
 .yvp-progresstime > span {
     font-size: 11px;
-    color: #CCC;
+    color: #EEE;
 }

@@ -368,6 +368,7 @@
         }
         this._mousemove_timeout = setTimeout(function() {
           this.addClass('hidden');
+          this.dispatchEvent({type: 'hidecontrols', target: this});
         }.bind(this), 2500);
       }.bind(this));
     }
@@ -438,15 +439,19 @@
       }
 
       this.setLevel = function(percent) {
-        this.element().height(percent + '%');
-        this._yvp._player.setVolume(percent / 100);
-
         if(percent > 40) {
           this._parent.removeClass('fa-volume-down fa-volume-off').addClass('fa-volume-up');
         } else if(percent < 39 && percent > 20) {
           this._parent.removeClass('fa-volume-up fa-volume-off').addClass('fa-volume-down');
         } else if(percent < 19) {
           this._parent.removeClass('fa-volume-up fa-volume-down').addClass('fa-volume-off');
+        }
+        if(percent < 5) {
+          this._yvp._player.setVolume(0);
+          this.element().height('0%');
+        } else {
+          this._yvp._player.setVolume(percent / 100);
+          this.element().height(percent + '%');
         }
       }
     }
