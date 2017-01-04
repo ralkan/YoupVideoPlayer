@@ -2,6 +2,8 @@
     display: inline-block;
     position: relative;
     font-family: arial, "Roboto";
+    width:100%;
+    height:100%;
 }
 
 .yvp-video {
@@ -36,6 +38,10 @@
     position: absolute;
     top:0;
     left:0;
+}
+
+.yvp-container video {
+    background-color: #111;
 }
 
 .yvp-container.yvp-fullscreen video {
