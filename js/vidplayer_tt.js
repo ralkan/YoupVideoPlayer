@@ -414,7 +414,7 @@
         this.onMouseMove(function(e) {
           if(this._isDragging) this._handleVolumeChange(e);
         }.bind(this));
-        $(document).mouseup(function() {
+        $(win.document).mouseup(function() {
           this._isDragging = false;
         }.bind(this));
       }

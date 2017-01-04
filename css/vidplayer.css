@@ -8,11 +8,6 @@
     vertical-align: middle;
 }
 
-video {
-    display: inline-block;
-    vertical-align: baseline;
-}
-
 .yvp-wr:-webkit-full-screen {
     width: 100% !important;
     height: 100% !important;
@@ -59,15 +54,19 @@ video {
     height: 100%;
     width: 100%;
     cursor: pointer;
-    background: rgba(0,0,0,.15);
+    background: rgba(0,0,0,.2);
 }
 
 .yvp-center-icon-wr {
-    display: none;
+    opacity: 0;
     pointer-events: none;
+    -webkit-transition: opacity 0.3s;
+    -moz-transition: opacity 0.3s;
+    -o-transition: opacity 0.3s;
+    transition: opacity 0.3s;
 }
 .yvp-center-icon-wr.visible {
-    display: block;
+    opacity: 1;
 }
 
 .yvp-bigplaybtnwr:hover .yvp-bigplaybtn {
